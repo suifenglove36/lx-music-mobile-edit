@@ -207,6 +207,8 @@
   "player__getting_url": "歌曲連結獲取中...",
   "player__getting_url_delay_retry": "伺服器繁忙，{time} 秒後重試...",
   "player__loading": "音樂載入中...",
+  "player__play_list": "目前播放清單",
+  "player__show_lyric": "顯示歌詞",
   "player__refresh_url": "URL 過期，正在重新整理 URL...",
   "player_cache_migrating": "歌曲快取遷移中，請稍等 ⌛️",
   "quality_high_quality": "HQ",

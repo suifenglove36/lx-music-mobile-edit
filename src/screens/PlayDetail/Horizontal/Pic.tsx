@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { TouchableOpacity, View } from 'react-native'
 // import { useLayout } from '@/utils/hooks'
 import { usePlayerMusicInfo } from '@/store/player/hook'
 import { useWindowSize } from '@/utils/hooks'
@@ -12,9 +12,14 @@ import { marginLeft } from './constant'
 import Image from '@/components/common/Image'
 import { useStatusbarHeight } from '@/store/common/hook'
 import commonState from '@/store/common/state'
+import { toggleShowPlayList } from '@/core/player/playListUI'
+import { useIsShowPlayList } from '@/store/player/hook'
+import { useI18n } from '@/lang'
 
 
 export default memo(({ componentId }: { componentId: string }) => {
+  const t = useI18n()
+  const isShowPlayList = useIsShowPlayList()
   const musicInfo = usePlayerMusicInfo()
   const { width: winWidth, height: winHeight } = useWindowSize()
   const statusBarHeight = useStatusbarHeight()
@@ -36,13 +41,18 @@ export default memo(({ componentId }: { componentId: string }) => {
 
   return (
     <View style={{ ...styles.container, height: contentHeight }}>
-      <View style={{ ...styles.content, elevation: animated ? 3 : 0 }}>
+      <TouchableOpacity
+        style={{ ...styles.content, elevation: animated ? 3 : 0 }}
+        activeOpacity={0.85}
+        onPress={toggleShowPlayList}
+        accessibilityLabel={isShowPlayList ? t('player__show_lyric') : t('player__play_list')}
+      >
         <Image url={pic} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic} style={{
           width: imgWidth,
           height: imgWidth,
           borderRadius: 2,
         }} />
-      </View>
+      </TouchableOpacity>
     </View>
   )
 })

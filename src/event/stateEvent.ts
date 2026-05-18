@@ -76,6 +76,10 @@ export class StateEvent extends Event {
     this.emit('playTempPlayListChanged', tempPlayList)
   }
 
+  isShowPlayListChanged(isShowPlayList: PlayerState['isShowPlayList']) {
+    this.emit('isShowPlayListChanged', isShowPlayList)
+  }
+
   /**
    * 我的列表更新
    */

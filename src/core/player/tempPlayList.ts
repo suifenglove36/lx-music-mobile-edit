@@ -19,6 +19,12 @@ export const removeTempPlayList = (index: number) => {
   playerActions.removeTempPlayList(index)
 }
 /**
+ * 调整稍后播放列表顺序
+ */
+export const moveTempPlayList = (fromIndex: number, toIndex: number) => {
+  playerActions.moveTempPlayList(fromIndex, toIndex)
+}
+/**
  * 清空稍后播放列表
  */
 export const clearTempPlayeList = () => {

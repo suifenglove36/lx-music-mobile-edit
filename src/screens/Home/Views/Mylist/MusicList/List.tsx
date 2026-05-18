@@ -118,6 +118,15 @@ const List = forwardRef<ListType, ListProps>(({ onShowMenu, onMuiltSelectMode, o
             listFirstScrollRef.current = true
             if (waitJumpListPositionRef.current) {
               waitJumpListPositionRef.current = false
+              if (playerState.playMusicInfo.listId == id && playerState.playMusicInfo.musicInfo?.id) {
+                const currentIndex = list.findIndex(m => m.id == playerState.playMusicInfo.musicInfo?.id)
+                if (currentIndex >= 0) {
+                  try {
+                    flatListRef.current?.scrollToIndex({ index: Math.floor(currentIndex / (rowInfo.current.rowNum ?? 1)), viewPosition: 0.3, animated: false })
+                    return
+                  } catch {}
+                }
+              }
               if (playerState.playMusicInfo.listId == id && playerState.playInfo.playIndex > -1) {
                 try {
                   flatListRef.current?.scrollToIndex({ index: Math.floor(playerState.playInfo.playIndex / (rowInfo.current.rowNum ?? 1)), viewPosition: 0.3, animated: false })
@@ -148,6 +157,17 @@ const List = forwardRef<ListType, ListProps>(({ onShowMenu, onMuiltSelectMode, o
         if (listId != listState.activeListId) {
           setActiveList(listId)
           if (currentListIdRef.current != listId) waitJumpListPositionRef.current = true
+        } else if (playerState.playMusicInfo.musicInfo?.id) {
+          if (isUpdateingList) waitJumpListPositionRef.current = true
+          else {
+            void getListMusics(listState.activeListId).then((list) => {
+              const currentIndex = list.findIndex(m => m.id == playerState.playMusicInfo.musicInfo?.id)
+              if (currentIndex < 0) return
+              try {
+                flatListRef.current?.scrollToIndex({ index: Math.floor(currentIndex / (rowInfo.current.rowNum ?? 1)), viewPosition: 0.3, animated: true })
+              } catch {}
+            })
+          }
         } else if (playerState.playInfo.playIndex > -1) {
           if (isUpdateingList) waitJumpListPositionRef.current = true
           else {

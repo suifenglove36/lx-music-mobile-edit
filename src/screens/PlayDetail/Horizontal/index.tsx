@@ -13,7 +13,9 @@ import commonState, { type InitState as CommonState } from '@/store/common/state
 import Pic from './Pic'
 // import ControlBtn from './ControlBtn'
 import Lyric from './Lyric'
+import PlayListPanel from '../components/PlayListPanel'
 import Player from './Player'
+import { useIsShowPlayList } from '@/store/player/hook'
 import { createStyle } from '@/utils/tools'
 import { marginLeftRaw } from './constant'
 import { useStatusbarHeight } from '@/store/common/hook'
@@ -21,6 +23,7 @@ import { useStatusbarHeight } from '@/store/common/hook'
 
 export default memo(({ componentId }: { componentId: string }) => {
   const statusBarHeight = useStatusbarHeight()
+  const isShowPlayList = useIsShowPlayList()
 
   useEffect(() => {
     setComponentId(COMPONENT_IDS.playDetail, componentId)
@@ -68,7 +71,7 @@ export default memo(({ componentId }: { componentId: string }) => {
           </View> */}
         </View>
         <View style={styles.right}>
-          <Lyric />
+          {isShowPlayList ? <PlayListPanel /> : <Lyric />}
         </View>
       </View>
     </PageContent>

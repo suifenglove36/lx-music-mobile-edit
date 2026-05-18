@@ -3,6 +3,8 @@ import { View } from 'react-native'
 import PlayModeBtn from './PlayModeBtn'
 import MusicAddBtn from './MusicAddBtn'
 import TimeoutExitBtn from './TimeoutExitBtn'
+import PlayListToggleBtn from '@/screens/PlayDetail/components/PlayListToggleBtn'
+import { BTN_ICON_SIZE, BTN_WIDTH } from './Btn'
 
 export default () => {
   return (
@@ -10,6 +12,7 @@ export default () => {
       <TimeoutExitBtn />
       <MusicAddBtn />
       <PlayModeBtn />
+      <PlayListToggleBtn size={BTN_ICON_SIZE} width={BTN_WIDTH} />
     </View>
   )
 }

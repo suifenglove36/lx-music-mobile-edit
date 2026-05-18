@@ -8,21 +8,23 @@ import Player from './Player'
 import PagerView, { type PagerViewOnPageSelectedEvent } from 'react-native-pager-view'
 import Pic from './Pic'
 import Lyric from './Lyric'
+import PlayListPanel from '../components/PlayListPanel'
+import { useIsShowPlayList } from '@/store/player/hook'
 import { screenkeepAwake, screenUnkeepAwake } from '@/utils/nativeModules/utils'
 import commonState, { type InitState as CommonState } from '@/store/common/state'
 import { createStyle } from '@/utils/tools'
 // import { useTheme } from '@/store/theme/hook'
 
-const LyricPage = ({ activeIndex }: { activeIndex: number }) => {
+const LyricPage = ({ activeIndex, isShowPlayList }: { activeIndex: number, isShowPlayList: boolean }) => {
   const initedRef = useRef(false)
-  const lyric = useMemo(() => <Lyric />, [])
+  const content = useMemo(() => (isShowPlayList ? <PlayListPanel /> : <Lyric />), [isShowPlayList])
   switch (activeIndex) {
     // case 3:
     case 1:
       if (!initedRef.current) initedRef.current = true
-      return lyric
+      return content
     default:
-      return initedRef.current ? lyric : null
+      return initedRef.current ? content : null
   }
   // return activeIndex == 0 || activeIndex == 1 ? setting : null
 }
@@ -30,6 +32,7 @@ const LyricPage = ({ activeIndex }: { activeIndex: number }) => {
 // global.iskeep = false
 export default memo(({ componentId }: { componentId: string }) => {
   // const theme = useTheme()
+  const isShowPlayList = useIsShowPlayList()
   const [pageIndex, setPageIndex] = useState(0)
   const showLyricRef = useRef(false)
 
@@ -80,10 +83,10 @@ export default memo(({ componentId }: { componentId: string }) => {
           style={styles.pagerView}
         >
           <View collapsable={false}>
-            <Pic componentId={componentId} />
+            <Pic componentId={componentId} onTogglePlayList={() => { setPageIndex(1) }} />
           </View>
           <View collapsable={false}>
-            <LyricPage activeIndex={pageIndex} />
+            <LyricPage activeIndex={pageIndex} isShowPlayList={isShowPlayList} />
           </View>
         </PagerView>
         {/* <View style={styles.pageIndicator} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pageIndicator}>

@@ -67,6 +67,35 @@ export const useIsPlay = () => {
   return value
 }
 
+export const useIsShowPlayList = () => {
+  const [value, update] = useState(state.isShowPlayList)
+
+  useEffect(() => {
+    global.state_event.on('isShowPlayListChanged', update)
+    return () => {
+      global.state_event.off('isShowPlayListChanged', update)
+    }
+  }, [])
+
+  return value
+}
+
+export const useTempPlayList = () => {
+  const [value, update] = useState(state.tempPlayList)
+
+  useEffect(() => {
+    const handleUpdate = (list: InitState['tempPlayList']) => {
+      update([...list])
+    }
+    global.state_event.on('playTempPlayListChanged', handleUpdate)
+    return () => {
+      global.state_event.off('playTempPlayListChanged', handleUpdate)
+    }
+  }, [])
+
+  return value
+}
+
 export const useProgress = (autoUpdate = true) => {
   const [value, update] = useState(state.progress)
 

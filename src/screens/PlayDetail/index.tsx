@@ -7,6 +7,7 @@ import Horizontal from './Horizontal'
 import PageContent from '@/components/PageContent'
 import StatusBar from '@/components/common/StatusBar'
 import { setComponentId } from '@/core/common'
+import { setShowPlayList } from '@/core/player/playListUI'
 import { COMPONENT_IDS } from '@/config/constant'
 
 export default ({ componentId }: { componentId: string }) => {
@@ -14,6 +15,9 @@ export default ({ componentId }: { componentId: string }) => {
 
   useEffect(() => {
     setComponentId(COMPONENT_IDS.playDetail, componentId)
+    return () => {
+      setShowPlayList(false)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

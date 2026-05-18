@@ -9,6 +9,8 @@ import { useAssertApiSupport } from '@/store/common/hook'
 import { scaleSizeH } from '@/utils/pixelRatio'
 import Text from '@/components/common/Text'
 import Badge from '@/components/common/Badge'
+import PlayIndicator from '@/screens/PlayDetail/components/PlayListPanel/PlayIndicator'
+import { useIsPlay } from '@/store/player/hook'
 
 export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT)
 
@@ -26,6 +28,7 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
   isShowInterval: boolean
 }) => {
   const theme = useTheme()
+  const isPlay = useIsPlay()
 
   const isSelected = selectedList.includes(item)
   // console.log(item.name, selectedList, selectedList.includes(item))
@@ -48,7 +51,7 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
       <TouchableOpacity style={styles.listItemLeft} onPress={() => { onPress(item, index) }} onLongPress={() => { onLongPress(item, index) }}>
         {
           active
-            ? <Icon style={styles.sn} name="play-outline" size={13} color={theme['c-primary-font']} />
+            ? <PlayIndicator isPlaying={isPlay} />
             : <Text style={styles.sn} size={13} color={theme['c-300']}>{index + 1}</Text>
         }
         <View style={styles.itemInfo}>

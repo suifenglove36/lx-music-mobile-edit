@@ -24,6 +24,8 @@ export interface InitState {
   playedList: LX.Player.PlayMusicInfo[]
   tempPlayList: LX.Player.PlayMusicInfo[]
 
+  isShowPlayList: boolean
+
   loadErrorPicUrl: string
 
 
@@ -71,6 +73,8 @@ const state: InitState = {
 
   playedList: [],
   tempPlayList: [],
+
+  isShowPlayList: false,
 
   progress: {
     nowPlayTime: 0,
