@@ -87,7 +87,24 @@ export const PlayEqBars = memo(({ isPlaying }: { isPlaying: boolean }) => {
   )
 })
 
+const PlayIndicator = memo(({ isPlaying }: { isPlaying: boolean }) => (
+  <View style={styles.indicator}>
+    <PlayDot />
+    <PlayEqBars isPlaying={isPlaying} />
+  </View>
+))
+
+export default PlayIndicator
+
 const styles = createStyle({
+  indicator: {
+    width: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingHorizontal: 3,
+  },
   dot: {
     width: 10,
     height: 10,
