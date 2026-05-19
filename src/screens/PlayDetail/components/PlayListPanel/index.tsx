@@ -25,9 +25,6 @@ export default () => {
     emptyCurrentHint,
     currentPreItems,
     currentPostItems,
-    canSortCurrentPre,
-    canSortCurrentPost,
-    canSortTemp,
     isTempPlayListVisible,
     getCurrentPostItemIndex,
     reorderCurrentListItem,
@@ -92,7 +89,7 @@ export default () => {
           onPress={() => { void reloadCurrentList() }}
           disabled={isLoading}
         >
-          <Icon name="list-order" size={16} color={theme['c-500']} />
+          <Icon name="available_updates" size={16} color={theme['c-500']} />
         </TouchableOpacity>
       </View>
 
@@ -131,7 +128,6 @@ export default () => {
                   name={getItemName(item)}
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
-                  sortable={canSortCurrentPre && currentPreItems.length > 1}
                   reorderMin={0}
                   reorderMax={currentPreItems.length - 1}
                   onPress={() => { handlePlayCurrentItem(item) }}
@@ -166,7 +162,6 @@ export default () => {
                     singer={getTempItemSinger(item)}
                     isActive={isCurrentPlayingItem(item)}
                     isQueueItem
-                    sortable={canSortTemp}
                     reorderMin={0}
                     reorderMax={tempPlayList.length - 1}
                     onPress={() => { handlePlayTempItem(item) }}
@@ -187,7 +182,6 @@ export default () => {
                   name={getItemName(item)}
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
-                  sortable={canSortCurrentPost && currentPostItems.length > 1}
                   reorderMin={getCurrentPostItemIndex(0)}
                   reorderMax={getCurrentPostItemIndex(Math.max(0, currentPostItems.length - 1))}
                   onPress={() => { handlePlayCurrentItem(item) }}
@@ -200,7 +194,7 @@ export default () => {
         ) : (
           <>
             <View style={[styles.centerBox, { borderColor: theme['c-border-background'] }]}>
-              <Icon name="list-order" size={28} color={theme['c-400']} />
+              <Icon name="album" size={28} color={theme['c-400']} />
               <Text size={14} style={{ marginTop: 8 }}>列表为空</Text>
               <Text size={12} color={theme['c-500']} style={{ marginTop: 4, textAlign: 'center', paddingHorizontal: 24 }}>
                 {emptyCurrentHint}
@@ -231,7 +225,6 @@ export default () => {
                     singer={getTempItemSinger(item)}
                     isActive={isCurrentPlayingItem(item)}
                     isQueueItem
-                    sortable={canSortTemp}
                     reorderMin={0}
                     reorderMax={tempPlayList.length - 1}
                     onPress={() => { handlePlayTempItem(item) }}

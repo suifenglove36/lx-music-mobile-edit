@@ -35,7 +35,6 @@ export default memo(({
   singer,
   isActive,
   isQueueItem = false,
-  sortable = false,
   reorderMin = 0,
   reorderMax = Number.MAX_SAFE_INTEGER,
   onPress,
@@ -47,7 +46,6 @@ export default memo(({
   singer: string
   isActive: boolean
   isQueueItem?: boolean
-  sortable?: boolean
   reorderMin?: number
   reorderMax?: number
   onPress: () => void
@@ -58,8 +56,8 @@ export default memo(({
   const isPlay = useIsPlay()
   const isActivePlaying = isActive && isPlay
 
-  const canMoveUp = sortable && index > reorderMin
-  const canMoveDown = sortable && index < reorderMax
+  const canMoveUp = !!onReorder && index > reorderMin
+  const canMoveDown = !!onReorder && index < reorderMax
 
   const handleMoveUp = useCallback(() => {
     if (!canMoveUp || !onReorder) return
@@ -128,40 +126,36 @@ export default memo(({
           </View>
         </TouchableOpacity>
 
-        {sortable ? (
-          <>
-            <TouchableOpacity
-              style={styles.rowButton}
-              onPress={handleMoveUp}
-              disabled={!canMoveUp}
-              accessibilityLabel="上移"
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <View style={styles.chevronUp}>
-                <Icon
-                  name="chevron-right"
-                  size={14}
-                  color={canMoveUp ? moveIconColor : moveIconDisabledColor}
-                />
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.rowButton}
-              onPress={handleMoveDown}
-              disabled={!canMoveDown}
-              accessibilityLabel="下移"
-              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-            >
-              <View style={styles.chevronDown}>
-                <Icon
-                  name="chevron-right"
-                  size={14}
-                  color={canMoveDown ? moveIconColor : moveIconDisabledColor}
-                />
-              </View>
-            </TouchableOpacity>
-          </>
-        ) : null}
+        <TouchableOpacity
+          style={styles.rowButton}
+          onPress={handleMoveUp}
+          disabled={!canMoveUp}
+          accessibilityLabel="上移"
+          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+        >
+          <View style={styles.chevronUp}>
+            <Icon
+              name="chevron-right"
+              size={14}
+              color={canMoveUp ? moveIconColor : moveIconDisabledColor}
+            />
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.rowButton}
+          onPress={handleMoveDown}
+          disabled={!canMoveDown}
+          accessibilityLabel="下移"
+          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+        >
+          <View style={styles.chevronDown}>
+            <Icon
+              name="chevron-right"
+              size={14}
+              color={canMoveDown ? moveIconColor : moveIconDisabledColor}
+            />
+          </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.rowButton}

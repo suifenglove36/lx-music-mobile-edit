@@ -18,7 +18,7 @@ export default ({ size, width }: { size: number, width: number }) => {
       accessibilityLabel={isShowPlayList ? t('player__show_lyric') : t('player__play_list')}
     >
       <Icon
-        name="play-list"
+        name="menu"
         size={size}
         color={isShowPlayList ? theme['c-primary'] : (theme['c-font-label'] as string)}
       />

@@ -50,10 +50,6 @@ export default () => {
     return currentItems.slice(currentPlayingIndex + 1)
   }, [currentItems, currentPlayingIndex])
 
-  const canSortCurrentPre = !!activeListIdResolved && currentPreItems.length > 0
-  const canSortCurrentPost = !!activeListIdResolved && currentPostItems.length > 0
-  const canSortTemp = tempPlayList.length > 1
-
   const currentListLabel = useMemo(() => {
     const listId = currentSourceListId
     if (!listId) return '当前播放列表'
@@ -237,9 +233,6 @@ export default () => {
     emptyCurrentHint,
     currentPreItems,
     currentPostItems,
-    canSortCurrentPre,
-    canSortCurrentPost,
-    canSortTemp,
     isTempPlayListVisible,
     currentPlayingIndex,
     getCurrentPostItemIndex,
