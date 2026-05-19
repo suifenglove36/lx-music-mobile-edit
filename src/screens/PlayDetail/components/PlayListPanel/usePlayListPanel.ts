@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LIST_IDS } from '@/config/constant'
-import { getListMusics, overwriteListMusics, removeListMusics } from '@/core/list'
+import { getListMusics, overwriteListMusics, removeListMusics, updateListMusicPosition } from '@/core/list'
 import { updatePlayIndex } from '@/core/player/playInfo'
 import { playListById, playNext } from '@/core/player/player'
 import { clearTempPlayeList, moveTempPlayList, removeTempPlayList } from '@/core/player/tempPlayList'
@@ -8,7 +8,7 @@ import { setPlayListId } from '@/core/player/playInfo'
 import listAction from '@/store/list/action'
 import listState from '@/store/list/state'
 import playerState from '@/store/player/state'
-import { useIsShowPlayList, usePlayMusicInfo, useTempPlayList } from '@/store/player/hook'
+import { useIsPlay, useIsShowPlayList, usePlayMusicInfo, useTempPlayList } from '@/store/player/hook'
 type ListItem = LX.Music.MusicInfo | LX.Download.ListItem
 
 const getMusicInfo = (item: ListItem | LX.Player.PlayMusicInfo | null | undefined) => {
@@ -22,6 +22,7 @@ export default () => {
   const isShowPlayList = useIsShowPlayList()
   const playMusicInfo = usePlayMusicInfo()
   const tempPlayList = useTempPlayList()
+  const isPlay = useIsPlay()
 
   const [isLoading, setIsLoading] = useState(false)
   const [currentItems, setCurrentItems] = useState<ListItem[]>([])
@@ -48,6 +49,10 @@ export default () => {
     if (currentPlayingIndex < 0) return []
     return currentItems.slice(currentPlayingIndex + 1)
   }, [currentItems, currentPlayingIndex])
+
+  const canSortCurrentPre = !!activeListIdResolved && currentPreItems.length > 0
+  const canSortCurrentPost = !!activeListIdResolved && currentPostItems.length > 0
+  const canSortTemp = tempPlayList.length > 1
 
   const currentListLabel = useMemo(() => {
     const listId = currentSourceListId
@@ -78,6 +83,12 @@ export default () => {
     const musicInfo = getMusicInfo(item)
     return !!musicInfo && playMusicInfo.musicInfo?.id === musicInfo.id
   }, [playMusicInfo.musicInfo?.id])
+
+  const isSamePlayingMusic = useCallback((musicInfo: LX.Music.MusicInfo | null) => (
+    !!musicInfo &&
+    playMusicInfo.musicInfo?.id == musicInfo.id &&
+    isPlay
+  ), [isPlay, playMusicInfo.musicInfo?.id])
 
   const promoteCurrentListToTemp = useCallback(async() => {
     if (!activeListIdResolved || activeListIdResolved == LIST_IDS.TEMP) return false
@@ -115,16 +126,32 @@ export default () => {
     }
   }, [activeListIdResolved, currentPlayingIndex, isShowPlayList])
 
+  const reorderCurrentListItem = useCallback(async(sourceIndex: number, targetIndex: number) => {
+    if (!activeListIdResolved) return
+    if (sourceIndex === targetIndex) return
+    const item = currentItems[sourceIndex]
+    const musicInfo = getMusicInfo(item)
+    if (!musicInfo) return
+    if (activeListIdResolved != LIST_IDS.TEMP) {
+      await promoteCurrentListToTemp()
+    }
+    await updateListMusicPosition(LIST_IDS.TEMP, targetIndex, [musicInfo.id])
+    updatePlayIndex()
+    await reloadCurrentList()
+  }, [activeListIdResolved, currentItems, promoteCurrentListToTemp, reloadCurrentList])
+
   const handlePlayCurrentItem = useCallback((item: ListItem) => {
     if (!activeListIdResolved) return
     const musicInfo = getMusicInfo(item)
     if (!musicInfo) return
+    if (isSamePlayingMusic(musicInfo)) return
     void playListById(activeListIdResolved, musicInfo.id)
-  }, [activeListIdResolved])
+  }, [activeListIdResolved, isSamePlayingMusic])
 
   const handlePlayTempItem = useCallback((item: LX.Player.PlayMusicInfo) => {
     const musicInfo = getMusicInfo(item)
     if (!musicInfo || !item.listId) return
+    if (isSamePlayingMusic(musicInfo)) return
     const tempIndex = playerState.tempPlayList.findIndex(m => getMusicInfo(m)?.id == musicInfo.id)
     if (tempIndex >= 0) {
       if (tempIndex > 0) moveTempPlayList(tempIndex, 0)
@@ -132,6 +159,11 @@ export default () => {
     } else {
       void playListById(item.listId, musicInfo.id)
     }
+  }, [isSamePlayingMusic])
+
+  const handleReorderTempItem = useCallback((fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return
+    moveTempPlayList(fromIndex, toIndex)
   }, [])
 
   const handleRemoveCurrentItem = useCallback(async(index: number) => {
@@ -205,9 +237,14 @@ export default () => {
     emptyCurrentHint,
     currentPreItems,
     currentPostItems,
+    canSortCurrentPre,
+    canSortCurrentPost,
+    canSortTemp,
     isTempPlayListVisible,
     currentPlayingIndex,
     getCurrentPostItemIndex,
+    reorderCurrentListItem,
+    handleReorderTempItem,
     getItemName,
     getItemSinger,
     getTempItemName,

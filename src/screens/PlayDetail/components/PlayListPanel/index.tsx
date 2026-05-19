@@ -25,8 +25,13 @@ export default () => {
     emptyCurrentHint,
     currentPreItems,
     currentPostItems,
+    canSortCurrentPre,
+    canSortCurrentPost,
+    canSortTemp,
     isTempPlayListVisible,
     getCurrentPostItemIndex,
+    reorderCurrentListItem,
+    handleReorderTempItem,
     getItemName,
     getItemSinger,
     getTempItemName,
@@ -41,6 +46,19 @@ export default () => {
     handleClearTemp,
     registerScrollToIndex,
   } = usePlayListPanel()
+
+  const isGestureLockedRef = useRef(false)
+  const setGestureLocked = (locked: boolean) => {
+    isGestureLockedRef.current = locked
+  }
+  const playCurrentIfAllowed = (item: Parameters<typeof handlePlayCurrentItem>[0]) => {
+    if (isGestureLockedRef.current) return
+    handlePlayCurrentItem(item)
+  }
+  const playTempIfAllowed = (item: Parameters<typeof handlePlayTempItem>[0]) => {
+    if (isGestureLockedRef.current) return
+    handlePlayTempItem(item)
+  }
 
   const rowOffsets = useRef<number[]>([])
   const ROW_HEIGHT = 52
@@ -95,7 +113,7 @@ export default () => {
         <View style={{ flex: 1 }}>
           <Text size={15}>{currentListLabel}</Text>
           <Text size={11} color={theme['c-500']}>
-            {activeListId ? '点击播放、左滑删除' : '当前没有可展示的列表'}
+            {activeListId ? '点击播放、左滑删除、拖动左侧把手排序' : '当前没有可展示的列表'}
           </Text>
         </View>
         <TouchableOpacity
@@ -126,8 +144,11 @@ export default () => {
                   name={getItemName(item)}
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
-                  onPress={() => { handlePlayCurrentItem(item) }}
+                  sortable={canSortCurrentPre && currentPreItems.length > 1}
+                  onPress={() => { playCurrentIfAllowed(item) }}
                   onRemove={() => { void handleRemoveCurrentItem(listIndex) }}
+                  onReorder={(from, to) => { void reorderCurrentListItem(from, to) }}
+                  onGestureActiveChange={setGestureLocked}
                 />
               )
             })}
@@ -156,8 +177,11 @@ export default () => {
                     name={getTempItemName(item)}
                     singer={getTempItemSinger(item)}
                     isActive={isCurrentPlayingItem(item)}
-                    onPress={() => { handlePlayTempItem(item) }}
+                    sortable={canSortTemp}
+                    onPress={() => { playTempIfAllowed(item) }}
                     onRemove={() => { handleRemoveTempItem(index) }}
+                    onReorder={handleReorderTempItem}
+                    onGestureActiveChange={setGestureLocked}
                   />
                 ))}
               </View>
@@ -173,8 +197,11 @@ export default () => {
                   name={getItemName(item)}
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
-                  onPress={() => { handlePlayCurrentItem(item) }}
+                  sortable={canSortCurrentPost && currentPostItems.length > 1}
+                  onPress={() => { playCurrentIfAllowed(item) }}
                   onRemove={() => { void handleRemoveCurrentItem(listIndex) }}
+                  onReorder={(from, to) => { void reorderCurrentListItem(from, to) }}
+                  onGestureActiveChange={setGestureLocked}
                 />
               )
             })}
@@ -212,8 +239,11 @@ export default () => {
                     name={getTempItemName(item)}
                     singer={getTempItemSinger(item)}
                     isActive={isCurrentPlayingItem(item)}
-                    onPress={() => { handlePlayTempItem(item) }}
+                    sortable={canSortTemp}
+                    onPress={() => { playTempIfAllowed(item) }}
                     onRemove={() => { handleRemoveTempItem(index) }}
+                    onReorder={handleReorderTempItem}
+                    onGestureActiveChange={setGestureLocked}
                   />
                 ))}
               </View>
