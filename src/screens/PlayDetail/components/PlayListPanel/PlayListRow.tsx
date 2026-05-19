@@ -1,22 +1,45 @@
-import { memo, useCallback, useMemo, useRef } from 'react'
-import { Animated, PanResponder, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import {
+  Animated,
+  LayoutAnimation,
+  PanResponder,
+  Platform,
+  TouchableOpacity,
+  UIManager,
+  View,
+} from 'react-native'
 import { Icon } from '@/components/common/Icon'
 import Text from '@/components/common/Text'
 import { useTheme } from '@/store/theme/hook'
 import { useIsPlay } from '@/store/player/hook'
 import { createStyle } from '@/utils/tools'
-import PlayIndicator from './PlayIndicator'
+import { PlayDot, PlayEqBars } from './PlayIndicator'
 
-const SWIPE_OPEN = -72
-const SWIPE_TRIGGER = -48
-const ROW_STEP = 52
+export const ROW_HEIGHT = 54
+export const ROW_GAP = 8
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true)
+}
+
+const runReorderLayoutAnimation = () => {
+  LayoutAnimation.configureNext({
+    duration: 220,
+    update: { type: LayoutAnimation.Types.easeInEaseOut },
+    create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+  })
+}
 
 export default memo(({
   index,
   name,
   singer,
   isActive,
+  isQueueItem = false,
   sortable = false,
+  reorderMin = 0,
+  reorderMax = Number.MAX_SAFE_INTEGER,
   onPress,
   onRemove,
   onReorder,
@@ -26,7 +49,10 @@ export default memo(({
   name: string
   singer: string
   isActive: boolean
+  isQueueItem?: boolean
   sortable?: boolean
+  reorderMin?: number
+  reorderMax?: number
   onPress: () => void
   onRemove: () => void
   onReorder?: (fromIndex: number, toIndex: number) => void
@@ -34,11 +60,13 @@ export default memo(({
 }) => {
   const theme = useTheme()
   const isPlay = useIsPlay()
-  const translateX = useRef(new Animated.Value(0)).current
-  const isOpenRef = useRef(false)
+  const isActivePlaying = isActive && isPlay
+
+  const translateY = useRef(new Animated.Value(0)).current
+  const scale = useRef(new Animated.Value(1)).current
+  const dragOpacity = useRef(new Animated.Value(1)).current
+  const [isDragging, setIsDragging] = useState(false)
   const isGestureLockedRef = useRef(false)
-  const reorderAccumRef = useRef(0)
-  const reorderingRef = useRef(false)
 
   const setGestureLocked = useCallback((locked: boolean) => {
     if (isGestureLockedRef.current === locked) return
@@ -46,204 +74,212 @@ export default memo(({
     onGestureActiveChange?.(locked)
   }, [onGestureActiveChange])
 
-  const snapSwipe = useCallback((open: boolean) => {
-    isOpenRef.current = open
-    Animated.spring(translateX, {
-      toValue: open ? SWIPE_OPEN : 0,
-      useNativeDriver: true,
-      bounciness: 0,
-    }).start()
-  }, [translateX])
+  const startDragVisual = useCallback(() => {
+    setIsDragging(true)
+    setGestureLocked(true)
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1.02, useNativeDriver: true, bounciness: 0 }),
+      Animated.timing(dragOpacity, { toValue: 0.92, duration: 120, useNativeDriver: true }),
+    ]).start()
+  }, [dragOpacity, scale, setGestureLocked])
+
+  const endDragVisual = useCallback((onEnd?: () => void) => {
+    setIsDragging(false)
+    Animated.parallel([
+      Animated.spring(translateY, { toValue: 0, useNativeDriver: true, bounciness: 6 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, bounciness: 6 }),
+      Animated.timing(dragOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start(() => {
+      setGestureLocked(false)
+      onEnd?.()
+    })
+  }, [dragOpacity, scale, setGestureLocked, translateY])
+
+  const commitReorder = useCallback((dy: number) => {
+    if (!onReorder) return
+    const step = Math.round(dy / (ROW_HEIGHT + ROW_GAP))
+    if (!step) return
+    const target = Math.max(reorderMin, Math.min(reorderMax, index + step))
+    if (target === index) return
+    runReorderLayoutAnimation()
+    onReorder(index, target)
+  }, [index, onReorder, reorderMax, reorderMin])
 
   const handlePress = useCallback(() => {
-    if (isGestureLockedRef.current) return
-    if (isOpenRef.current) {
-      snapSwipe(false)
-      return
-    }
+    if (isGestureLockedRef.current || isDragging) return
     onPress()
-  }, [onPress, snapSwipe])
+  }, [isDragging, onPress])
 
-  const handleRemove = useCallback(() => {
-    snapSwipe(false)
-    onRemove()
-  }, [onRemove, snapSwipe])
-
-  const swipeResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gestureState) => (
-      !reorderingRef.current &&
-      Math.abs(gestureState.dx) > Math.abs(gestureState.dy) &&
-      Math.abs(gestureState.dx) > 6
-    ),
-    onPanResponderGrant: () => {
-      setGestureLocked(true)
-    },
-    onPanResponderMove: (_, gestureState) => {
-      if (reorderingRef.current) return
-      const base = isOpenRef.current ? SWIPE_OPEN : 0
-      const next = Math.min(0, Math.max(SWIPE_OPEN, base + gestureState.dx))
-      translateX.setValue(next)
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      if (reorderingRef.current) return
-      const base = isOpenRef.current ? SWIPE_OPEN : 0
-      const finalX = Math.min(0, Math.max(SWIPE_OPEN, base + gestureState.dx))
-      if (finalX <= SWIPE_TRIGGER) {
-        snapSwipe(true)
-      } else {
-        snapSwipe(false)
-      }
-      setGestureLocked(false)
-    },
-    onPanResponderTerminate: () => {
-      snapSwipe(isOpenRef.current)
-      setGestureLocked(false)
-    },
-  }), [setGestureLocked, snapSwipe, translateX])
-
-  const reorderResponder = useMemo(() => PanResponder.create({
+  const dragResponder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => sortable,
     onMoveShouldSetPanResponder: (_, gestureState) => (
-      sortable && Math.abs(gestureState.dy) > 6
+      sortable && Math.abs(gestureState.dy) > 4
     ),
     onPanResponderGrant: () => {
-      reorderingRef.current = true
-      reorderAccumRef.current = 0
-      setGestureLocked(true)
+      startDragVisual()
     },
     onPanResponderMove: (_, gestureState) => {
-      if (!onReorder) return
-      reorderAccumRef.current += gestureState.dy
-      if (reorderAccumRef.current > ROW_STEP) {
-        onReorder(index, index + 1)
-        reorderAccumRef.current = 0
-      } else if (reorderAccumRef.current < -ROW_STEP) {
-        onReorder(index, index - 1)
-        reorderAccumRef.current = 0
-      }
+      translateY.setValue(gestureState.dy)
     },
-    onPanResponderRelease: () => {
-      reorderingRef.current = false
-      reorderAccumRef.current = 0
-      setGestureLocked(false)
+    onPanResponderRelease: (_, gestureState) => {
+      const dy = gestureState.dy
+      endDragVisual(() => {
+        commitReorder(dy)
+      })
     },
     onPanResponderTerminate: () => {
-      reorderingRef.current = false
-      reorderAccumRef.current = 0
-      setGestureLocked(false)
+      endDragVisual()
     },
-  }), [index, onReorder, setGestureLocked, sortable])
+  }), [commitReorder, endDragVisual, sortable, startDragVisual, translateY])
+
+  const itemStyle = useMemo(() => {
+    const base = {
+      backgroundColor: isQueueItem ? theme['c-content-background'] : theme['c-main-background'],
+      borderColor: 'transparent' as string,
+      borderWidth: 1,
+    }
+    if (isActivePlaying) {
+      return {
+        ...base,
+        borderColor: theme['c-primary-alpha-600'],
+        backgroundColor: theme['c-primary-alpha-900'],
+      }
+    }
+    if (isActive) {
+      return {
+        ...base,
+        borderColor: theme['c-primary-alpha-700'],
+      }
+    }
+    return base
+  }, [isActive, isActivePlaying, isQueueItem, theme])
 
   return (
-    <View style={styles.rowWrap}>
-      <View style={[styles.deleteAction, { backgroundColor: '#e74c3c' }]}>
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleRemove} activeOpacity={0.8}>
-          <Icon name="close" size={14} color="#fff" />
-          <Text size={12} color="#fff" style={{ marginTop: 2 }}>删除</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Animated.View
-        style={[
-          styles.item,
-          { transform: [{ translateX }] },
-          isActive && { backgroundColor: theme['c-primary-background-hover'] },
-        ]}
-        {...swipeResponder.panHandlers}
-      >
+    <Animated.View
+      style={[
+        styles.rowWrap,
+        {
+          opacity: dragOpacity,
+          transform: [{ translateY }, { scale }],
+          zIndex: isDragging ? 20 : 0,
+          elevation: isDragging ? 8 : 0,
+        },
+      ]}
+    >
+      <View style={[styles.item, itemStyle, isActivePlaying && styles.itemActivePlaying]}>
         <View
-          style={styles.dragHandle}
-          {...(sortable ? reorderResponder.panHandlers : {})}
+          style={[
+            styles.dragHandle,
+            {
+              borderColor: theme['c-border-background'],
+              backgroundColor: theme['c-content-background'],
+              opacity: sortable ? 0.75 : 0.4,
+            },
+          ]}
+          {...(sortable ? dragResponder.panHandlers : {})}
         >
-          {sortable ? (
-            <Text size={12} color={theme['c-400']}>⋮⋮</Text>
-          ) : (
-            <View style={styles.dragHandlePlaceholder} />
-          )}
+          <Text size={13} color={theme['c-500']} style={styles.dragHandleText}>::</Text>
         </View>
 
         <TouchableOpacity
-          style={styles.mainTap}
+          style={styles.mainArea}
+          activeOpacity={0.85}
           onPress={handlePress}
-          activeOpacity={0.7}
-          delayLongPress={sortable ? 280 : undefined}
         >
-          <View style={styles.indexCell}>
-            {isActive
-              ? <PlayIndicator isPlaying={isPlay} />
-              : <Text size={12} color={theme['c-400']}>{index + 1}</Text>}
-          </View>
+          <Text size={12} color={theme['c-500']} style={styles.index}>{index + 1}</Text>
+          {isActive ? <PlayDot /> : null}
+          {isActive ? <PlayEqBars isPlaying={isPlay} /> : null}
           <View style={styles.meta}>
-            <Text size={14} color={isActive ? theme['c-primary-font'] : theme['c-font']} numberOfLines={1}>{name}</Text>
-            <Text size={11} color={isActive ? theme['c-primary-alpha-300'] : theme['c-500']} numberOfLines={1}>{singer}</Text>
+            <Text
+              size={14}
+              color={isActive ? theme['c-primary-font'] : theme['c-font']}
+              numberOfLines={1}
+              style={styles.name}
+            >
+              {name}
+            </Text>
+            <Text
+              size={12}
+              color={isActive ? theme['c-primary-alpha-300'] : theme['c-500']}
+              numberOfLines={1}
+              style={styles.singer}
+            >
+              {singer}
+            </Text>
           </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.removeBtn}
-          onPress={handleRemove}
+          style={styles.rowButton}
+          onPress={onRemove}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Icon name="close" size={12} color={theme['c-400']} />
+          <Icon name="close" size={15} color={theme['c-500']} />
         </TouchableOpacity>
-      </Animated.View>
-    </View>
+      </View>
+    </Animated.View>
   )
 })
 
 const styles = createStyle({
   rowWrap: {
-    position: 'relative',
-    marginBottom: 4,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  deleteAction: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    paddingRight: 18,
-  },
-  deleteBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 48,
+    marginBottom: ROW_GAP,
   },
   item: {
+    minHeight: ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     paddingVertical: 10,
-    paddingRight: 8,
-    borderRadius: 10,
-    backgroundColor: 'transparent',
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  itemActivePlaying: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
   dragHandle: {
-    width: 28,
+    width: 26,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 4,
+    borderRadius: 8,
+    borderWidth: 1,
   },
-  dragHandlePlaceholder: {
-    width: 12,
-    height: 12,
+  dragHandleText: {
+    lineHeight: 13,
+    fontWeight: '600',
   },
-  mainTap: {
+  mainArea: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     minWidth: 0,
   },
-  indexCell: {
-    width: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+  index: {
+    width: 24,
+    textAlign: 'right',
   },
   meta: {
     flex: 1,
     minWidth: 0,
-    paddingRight: 8,
+    gap: 3,
   },
-  removeBtn: {
-    padding: 4,
+  name: {
+    lineHeight: 19,
+  },
+  singer: {
+    lineHeight: 16,
+  },
+  rowButton: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
   },
 })

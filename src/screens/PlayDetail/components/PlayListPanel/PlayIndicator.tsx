@@ -11,12 +11,9 @@ const EqBar = ({ anim, minH, maxH, color }: { anim: Animated.Value, minH: number
   return <Animated.View style={[styles.eqBar, { height, backgroundColor: color }]} />
 }
 
-export default memo(({ isPlaying }: { isPlaying: boolean }) => {
+export const PlayDot = memo(() => {
   const theme = useTheme()
   const dotAnim = useRef(new Animated.Value(0)).current
-  const eq1 = useRef(new Animated.Value(0)).current
-  const eq2 = useRef(new Animated.Value(0)).current
-  const eq3 = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
     const dotLoop = Animated.loop(
@@ -31,6 +28,30 @@ export default memo(({ isPlaying }: { isPlaying: boolean }) => {
     }
   }, [dotAnim])
 
+  const dotScale = dotAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.15],
+  })
+
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        {
+          backgroundColor: theme['c-primary'],
+          transform: [{ scale: dotScale }],
+        },
+      ]}
+    />
+  )
+})
+
+export const PlayEqBars = memo(({ isPlaying }: { isPlaying: boolean }) => {
+  const theme = useTheme()
+  const eq1 = useRef(new Animated.Value(0)).current
+  const eq2 = useRef(new Animated.Value(0)).current
+  const eq3 = useRef(new Animated.Value(0)).current
+
   useEffect(() => {
     if (!isPlaying) return
     const createEqLoop = (anim: Animated.Value, duration: number) => Animated.loop(
@@ -39,59 +60,49 @@ export default memo(({ isPlaying }: { isPlaying: boolean }) => {
         Animated.timing(anim, { toValue: 0, duration: duration / 2, useNativeDriver: false }),
       ]),
     )
-    const loops = [
-      createEqLoop(eq1, 700).start(),
-      createEqLoop(eq2, 560).start(),
-      createEqLoop(eq3, 640).start(),
-    ]
+    const loop1 = createEqLoop(eq1, 700)
+    const loop2 = createEqLoop(eq2, 560)
+    const loop3 = createEqLoop(eq3, 640)
+    loop1.start()
+    loop2.start()
+    loop3.start()
     return () => {
+      loop1.stop()
+      loop2.stop()
+      loop3.stop()
       eq1.setValue(0)
       eq2.setValue(0)
       eq3.setValue(0)
-      loops.forEach(l => (l as unknown as { stop?: () => void }).stop?.())
     }
   }, [isPlaying, eq1, eq2, eq3])
 
-  const dotScale = dotAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.12],
-  })
+  const barColor = isPlaying ? theme['c-primary'] : theme['c-500']
 
   return (
-    <View style={styles.wrap}>
-      <Animated.View style={[styles.dot, { backgroundColor: theme['c-primary-font'], transform: [{ scale: dotScale }] }]} />
-      {isPlaying ? (
-        <View style={styles.eq}>
-          <EqBar anim={eq1} minH={4} maxH={12} color={theme['c-primary-font']} />
-          <EqBar anim={eq2} minH={5} maxH={14} color={theme['c-primary-font']} />
-          <EqBar anim={eq3} minH={4} maxH={11} color={theme['c-primary-font']} />
-        </View>
-      ) : null}
+    <View style={styles.eq}>
+      <EqBar anim={eq1} minH={5} maxH={14} color={barColor} />
+      <EqBar anim={eq2} minH={6} maxH={16} color={barColor} />
+      <EqBar anim={eq3} minH={5} maxH={12} color={barColor} />
     </View>
   )
 })
 
 const styles = createStyle({
-  wrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
   dot: {
-    width: 6,
-    height: 6,
+    width: 10,
+    height: 10,
     borderRadius: 999,
   },
   eq: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 2,
-    height: 14,
+    gap: 3,
+    width: 24,
+    height: 16,
   },
   eqBar: {
-    width: 2,
+    width: 3,
     borderRadius: 999,
-    backgroundColor: 'currentColor',
     opacity: 0.55,
   },
 })

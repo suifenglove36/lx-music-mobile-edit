@@ -6,7 +6,7 @@ import Text from '@/components/common/Text'
 import { useTheme } from '@/store/theme/hook'
 import { createStyle } from '@/utils/tools'
 import { useI18n } from '@/lang'
-import PlayListRow from './PlayListRow'
+import PlayListRow, { ROW_GAP, ROW_HEIGHT } from './PlayListRow'
 import usePlayListPanel from './usePlayListPanel'
 
 export default () => {
@@ -61,11 +61,11 @@ export default () => {
   }
 
   const rowOffsets = useRef<number[]>([])
-  const ROW_HEIGHT = 52
+  const ROW_STEP = ROW_HEIGHT + ROW_GAP
 
   useEffect(() => {
     registerScrollToIndex((index: number) => {
-      const offset = rowOffsets.current[index] ?? index * ROW_HEIGHT
+      const offset = rowOffsets.current[index] ?? index * ROW_STEP
       scrollRef.current?.scrollTo({ y: Math.max(0, offset - 80), animated: true })
     })
   }, [registerScrollToIndex])
@@ -88,7 +88,7 @@ export default () => {
   const trackRowOffset = () => {
     const current = rowIndex
     rowIndex += 1
-    return current * ROW_HEIGHT
+    return current * ROW_STEP
   }
 
   return (
@@ -113,7 +113,7 @@ export default () => {
         <View style={{ flex: 1 }}>
           <Text size={15}>{currentListLabel}</Text>
           <Text size={11} color={theme['c-500']}>
-            {activeListId ? '点击播放、左滑删除、拖动左侧把手排序' : '当前没有可展示的列表'}
+            {activeListId ? '可拖拽排序、点击播放' : '当前没有可展示的列表'}
           </Text>
         </View>
         <TouchableOpacity
@@ -145,6 +145,8 @@ export default () => {
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
                   sortable={canSortCurrentPre && currentPreItems.length > 1}
+                  reorderMin={0}
+                  reorderMax={currentPreItems.length - 1}
                   onPress={() => { playCurrentIfAllowed(item) }}
                   onRemove={() => { void handleRemoveCurrentItem(listIndex) }}
                   onReorder={(from, to) => { void reorderCurrentListItem(from, to) }}
@@ -154,7 +156,7 @@ export default () => {
             })}
 
             {isTempPlayListVisible ? (
-              <View style={[styles.queueCard, { borderColor: theme['c-border-background'] }]}>
+              <View style={[styles.queueCard, { borderColor: theme['c-primary-alpha-200'] }]}>
                 <View style={styles.queueHeader}>
                   <View style={{ flex: 1 }}>
                     <Text size={14}>稍后播放</Text>
@@ -177,7 +179,10 @@ export default () => {
                     name={getTempItemName(item)}
                     singer={getTempItemSinger(item)}
                     isActive={isCurrentPlayingItem(item)}
+                    isQueueItem
                     sortable={canSortTemp}
+                    reorderMin={0}
+                    reorderMax={tempPlayList.length - 1}
                     onPress={() => { playTempIfAllowed(item) }}
                     onRemove={() => { handleRemoveTempItem(index) }}
                     onReorder={handleReorderTempItem}
@@ -198,6 +203,8 @@ export default () => {
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
                   sortable={canSortCurrentPost && currentPostItems.length > 1}
+                  reorderMin={getCurrentPostItemIndex(0)}
+                  reorderMax={getCurrentPostItemIndex(Math.max(0, currentPostItems.length - 1))}
                   onPress={() => { playCurrentIfAllowed(item) }}
                   onRemove={() => { void handleRemoveCurrentItem(listIndex) }}
                   onReorder={(from, to) => { void reorderCurrentListItem(from, to) }}
@@ -216,7 +223,7 @@ export default () => {
               </Text>
             </View>
             {isTempPlayListVisible ? (
-              <View style={[styles.queueCard, { borderColor: theme['c-border-background'] }]}>
+              <View style={[styles.queueCard, { borderColor: theme['c-primary-alpha-200'] }]}>
                 <View style={styles.queueHeader}>
                   <View style={{ flex: 1 }}>
                     <Text size={14}>稍后播放</Text>
@@ -239,7 +246,10 @@ export default () => {
                     name={getTempItemName(item)}
                     singer={getTempItemSinger(item)}
                     isActive={isCurrentPlayingItem(item)}
+                    isQueueItem
                     sortable={canSortTemp}
+                    reorderMin={0}
+                    reorderMax={tempPlayList.length - 1}
                     onPress={() => { playTempIfAllowed(item) }}
                     onRemove={() => { handleRemoveTempItem(index) }}
                     onReorder={handleReorderTempItem}
@@ -324,10 +334,11 @@ const styles = createStyle({
   },
   queueCard: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 10,
-    marginTop: 8,
+    borderRadius: 14,
+    padding: 8,
+    marginTop: 12,
     marginBottom: 4,
+    overflow: 'hidden',
   },
   queueHeader: {
     flexDirection: 'row',
