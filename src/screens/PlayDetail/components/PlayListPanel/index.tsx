@@ -46,6 +46,7 @@ export default () => {
 
   const rowOffsets = useRef<number[]>([])
   const ROW_STEP = ROW_HEIGHT + ROW_GAP
+  const currentListReorderMax = Math.max(0, currentItems.length - 1)
 
   useEffect(() => {
     registerScrollToIndex((index: number) => {
@@ -129,7 +130,7 @@ export default () => {
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
                   reorderMin={0}
-                  reorderMax={currentPreItems.length - 1}
+                  reorderMax={currentListReorderMax}
                   onPress={() => { handlePlayCurrentItem(item) }}
                   onRemove={() => { void handleRemoveCurrentItem(listIndex) }}
                   onReorder={(from, to) => { void reorderCurrentListItem(from, to) }}
@@ -182,8 +183,8 @@ export default () => {
                   name={getItemName(item)}
                   singer={getItemSinger(item)}
                   isActive={isCurrentPlayingItem(item)}
-                  reorderMin={getCurrentPostItemIndex(0)}
-                  reorderMax={getCurrentPostItemIndex(Math.max(0, currentPostItems.length - 1))}
+                  reorderMin={0}
+                  reorderMax={currentListReorderMax}
                   onPress={() => { handlePlayCurrentItem(item) }}
                   onRemove={() => { void handleRemoveCurrentItem(listIndex) }}
                   onReorder={(from, to) => { void reorderCurrentListItem(from, to) }}
