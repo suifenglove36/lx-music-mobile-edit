@@ -26,7 +26,7 @@ export default memo(() => {
     void openUrl('https://github.com/lyswhut/lx-music-mobile/issues?q=is%3Aissue+')
   }
   const openGHReleasePage = () => {
-    void openUrl('https://github.com/lyswhut/lx-music-mobile/releases')
+    void openUrl('https://github.com/suifenglove36/lx-music-mobile-edit/releases')
   }
   const openFAQPage = () => {
     void openUrl('https://lyswhut.github.io/lx-music-doc/mobile/faq')

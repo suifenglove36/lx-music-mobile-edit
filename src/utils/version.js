@@ -13,14 +13,15 @@ const abis = [
 ]
 
 const address = [
+  [`https://ghfast.top/https://raw.githubusercontent.com/${author}/${name}/master/publish/version.json`, 'direct']
   [`https://raw.githubusercontent.com/${author.name}/${name}/master/publish/version.json`, 'direct'],
-  ['https://registry.npmjs.org/lx-music-mobile-version-info/latest', 'npm'],
-  [`https://cdn.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
-  [`https://fastly.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
-  [`https://gcore.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
-  ['https://registry.npmmirror.com/lx-music-mobile-version-info/latest', 'npm'],
-  ['https://gitee.com/lyswhut/lx-music-mobile-versions/raw/master/version.json', 'direct'],
-  ['http://cdn.stsky.cn/lx-music/mobile/version.json', 'direct'],
+  // ['https://registry.npmjs.org/lx-music-mobile-version-info/latest', 'npm'],
+  // [`https://cdn.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
+  // [`https://fastly.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
+  // [`https://gcore.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
+  // ['https://registry.npmmirror.com/lx-music-mobile-version-info/latest', 'npm'],
+  // ['https://gitee.com/lyswhut/lx-music-mobile-versions/raw/master/version.json', 'direct'],
+  // ['http://cdn.stsky.cn/lx-music/mobile/version.json', 'direct'],
 ]
 
 
@@ -86,7 +87,7 @@ let apkSavePath
 
 export const downloadNewVersion = async(version, onDownload = noop) => {
   const abi = await getTargetAbi()
-  const url = `https://github.com/${author.name}/${name}/releases/download/v${version}/${name}-v${version}-${abi}.apk`
+  const url = `https://github.com/${author.name}/${name}/releases/download/v${version}/lx-music-mobile-v${version}-${abi}.apk`
   let savePath = temporaryDirectoryPath + '/lx-music-mobile.apk'
 
   if (downloadJobId) stopDownload(downloadJobId)
