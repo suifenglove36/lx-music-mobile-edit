@@ -1,5 +1,5 @@
 {
-  "name": "lx-music-mobile-edit",
+  "name": "lx-music-mobile",
   "version": "1.8.5",
   "versionCode": 76,
   "private": true,
@@ -36,6 +36,7 @@
   ],
   "author": {
     "name": "suifenglove36",
+    "repo": "lx-music-mobile-edit",
     "email": ""
   },
   "license": "Apache-2.0",

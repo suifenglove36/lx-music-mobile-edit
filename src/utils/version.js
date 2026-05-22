@@ -13,8 +13,8 @@ const abis = [
 ]
 
 const address = [
-  [`https://ghfast.top/https://raw.githubusercontent.com/${author}/${name}/master/publish/version.json`, 'direct']
-  [`https://raw.githubusercontent.com/${author.name}/${name}/master/publish/version.json`, 'direct'],
+  [`https://ghfast.top/https://raw.githubusercontent.com/${author.name}/${author.repo}/master/publish/version.json`, 'direct'],
+  [`https://raw.githubusercontent.com/${author.name}/${author.repo}/master/publish/version.json`, 'direct'],
   // ['https://registry.npmjs.org/lx-music-mobile-version-info/latest', 'npm'],
   // [`https://cdn.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
   // [`https://fastly.jsdelivr.net/gh/${author.name}/${name}/publish/version.json`, 'direct'],
@@ -87,7 +87,7 @@ let apkSavePath
 
 export const downloadNewVersion = async(version, onDownload = noop) => {
   const abi = await getTargetAbi()
-  const url = `https://github.com/${author.name}/${name}/releases/download/v${version}/lx-music-mobile-v${version}-${abi}.apk`
+  const url = `https://github.com/${author.name}/${author.repo}/releases/download/v${version}/lx-music-mobile-v${version}-${abi}.apk`
   let savePath = temporaryDirectoryPath + '/lx-music-mobile.apk'
 
   if (downloadJobId) stopDownload(downloadJobId)
